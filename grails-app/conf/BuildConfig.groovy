@@ -103,6 +103,16 @@ grails.project.dependency.resolution = {
         test ':functional-test:2.0.RC1'
         test ':transmart-core:1.2.2-SNAPSHOT'
         test ':transmart-core-db-tests:1.2.2-SNAPSHOT'
+
+        // support for static code analysis
+        compile ":codenarc:0.21"
+    }
+}
+
+codenarc.reports = {
+    TransmartAppReport('html') {
+        outputFile = 'CodeNarc-folder-management-plugin-Report.html'
+        title = 'Report for folder-management-plugin'
     }
 }
 
