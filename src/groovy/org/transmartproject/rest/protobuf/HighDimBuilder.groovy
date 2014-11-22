@@ -25,7 +25,6 @@
 
 package org.transmartproject.rest.protobuf
 
-import groovy.transform.CompileStatic
 import org.transmartproject.core.dataquery.DataRow
 import org.transmartproject.core.dataquery.TabularResult
 import org.transmartproject.core.dataquery.highdim.AssayColumn
@@ -33,17 +32,16 @@ import org.transmartproject.core.dataquery.highdim.BioMarkerDataRow
 import org.transmartproject.core.dataquery.highdim.projections.MultiValueProjection
 import org.transmartproject.core.dataquery.highdim.projections.Projection
 import org.transmartproject.rest.protobuf.HighDimProtos.Assay
-import org.transmartproject.rest.protobuf.HighDimProtos.HighDimHeader
 import org.transmartproject.rest.protobuf.HighDimProtos.ColumnSpec
 import org.transmartproject.rest.protobuf.HighDimProtos.ColumnSpec.ColumnType
-import org.transmartproject.rest.protobuf.HighDimProtos.Row
 import org.transmartproject.rest.protobuf.HighDimProtos.ColumnValue
+import org.transmartproject.rest.protobuf.HighDimProtos.HighDimHeader
+import org.transmartproject.rest.protobuf.HighDimProtos.Row
 
 /**
  * Helper class to build HighDimTable for highdim results
  * For performance reasons, this builder has state and cannot be reused, so needs a new instance for every TabularResult
  */
-@CompileStatic
 class HighDimBuilder {
 
     /**
@@ -55,32 +53,38 @@ class HighDimBuilder {
 
     OutputStream out
 
-    @Lazy private Map<String, ? extends Class> dataColumns = { getDataProperties(projection) }()
+    private Map<String, ? extends Class> dataColumns
 
     private Row.Builder rowBuilder = Row.newBuilder()
     private ColumnValue.Builder columnBuilder = ColumnValue.newBuilder()
 
     static void write(Projection projection,
-                                 TabularResult<AssayColumn, DataRow<AssayColumn,? extends Object>> tabularResult,
-                                 OutputStream out) {
+                      TabularResult<AssayColumn, DataRow<AssayColumn, ? extends Object>> tabularResult,
+                      OutputStream out) {
 
-        Iterator<DataRow<AssayColumn,?>> rows = tabularResult.getRows()
+        Iterator<DataRow<AssayColumn, ?>> rows = tabularResult.getRows()
         if (!rows.hasNext()) {
             throw new IllegalArgumentException("No results") //TODO: improve this
         }
 
         List<AssayColumn> cols = tabularResult.indicesList
 
+        def firstRow = rows.next()
+
+        def dataColumns = getDataProperties(projection, firstRow)
+
         HighDimBuilder builder = new HighDimBuilder(
                 projection: projection,
                 assayColumns: cols,
                 out: out,
+                dataColumns: dataColumns
         )
 
         builder.createHeader().writeDelimitedTo(out)
 
+        builder.createRow(firstRow).writeDelimitedTo(out)
         // Normal groovy iterator syntax doesn't seem to work in this case with CompileStatic
-        while(rows.hasNext()) {
+        while (rows.hasNext()) {
             builder.createRow(rows.next()).writeDelimitedTo(out)
         }
     }
@@ -97,7 +101,7 @@ class HighDimBuilder {
         })
 
         Assay.Builder assayBuilder = Assay.newBuilder()
-        headerBuilder.addAllAssay( assayColumns.collect { AssayColumn col ->
+        headerBuilder.addAllAssay(assayColumns.collect { AssayColumn col ->
             createAssay(assayBuilder, col)
         })
 
@@ -108,12 +112,26 @@ class HighDimBuilder {
         Number.isAssignableFrom(clazz) ? ColumnType.DOUBLE : ColumnType.STRING
     }
 
-    public static Map<String, Class> getDataProperties(Projection projection) {
+    public static Map<String, Class> getDataProperties(Projection projection,
+                                                       DataRow<AssayColumn, Object> firstRow,
+                                                       Class defaultClass = Double) {
         if (projection instanceof MultiValueProjection) {
             MultiValueProjection mvp = projection as MultiValueProjection
             return mvp.dataProperties
         } else {
-            return [('value'): Double]
+            Class firstNotNullValueClass = null
+            if (firstRow) {
+                for (Object obj : firstRow) {
+                    if (obj != null) {
+                        firstNotNullValueClass = obj.class
+                        assert (Number.isAssignableFrom(firstNotNullValueClass)
+                                || firstNotNullValueClass == String
+                                || firstNotNullValueClass.enum)
+                        break
+                    }
+                }
+            }
+            return [('value'): firstNotNullValueClass ?: defaultClass]
         }
     }
 
@@ -149,10 +167,8 @@ class HighDimBuilder {
         } else {
             // Single column projection
             columnBuilder.clear()
-            Class firstNotNullValueClass =
-                    assayColumns.findResult(String) { AssayColumn col -> inputRow.getAt(col)?.class }
 
-            if (typeForClass(firstNotNullValueClass) == ColumnType.DOUBLE) {
+            if (typeForClass(dataColumns['value']) == ColumnType.DOUBLE) {
                 columnBuilder.addAllDoubleValue(
                         assayColumns.collect { AssayColumn col ->
                             safeDouble(inputRow.getAt(col))
@@ -176,18 +192,18 @@ class HighDimBuilder {
 
         Map optionalValues = [
                 // Capitalized because we're pasting 'set' in front of the key strings
-                Platform: col.platform?.id,
-                SampleCode: col.sampleCode,
+                Platform      : col.platform?.id,
+                SampleCode    : col.sampleCode,
                 SampleTypeName: col.sampleType?.label,
-                TimepointName: col.timepoint?.label,
+                TimepointName : col.timepoint?.label,
                 TissueTypeName: col.tissueType?.label,
         ]
-        
+
         optionalValues.each { field, value ->
-            if(value != null) {
+            if (value != null) {
                 // Java reflection because of CompileStatic. The conversion to Object[] is not necessary,
                 // but otherwise IntelliJ shows an error
-                builder.class.getDeclaredMethod('set'+field, String).invoke(builder, [value] as Object[])
+                builder.class.getDeclaredMethod('set' + field, String).invoke(builder, [value] as Object[])
             }
         }
         builder.build()

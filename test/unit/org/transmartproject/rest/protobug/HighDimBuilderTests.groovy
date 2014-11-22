@@ -58,6 +58,7 @@ class HighDimBuilderTests {
     @Test
     void "test single field projection. Double"() {
         def inputDataRow = new TestDataRow(assayColumns: testAssays, data: [1d, 2d])
+        builder.dataColumns = [value: Double]
         Row row = builder.createRow(inputDataRow)
 
         assertThat row, allOf(
@@ -72,6 +73,7 @@ class HighDimBuilderTests {
     @Test
     void "test single field projection. Any number"() {
         def inputDataRow = new TestDataRow(assayColumns: testAssays, data: [1, 2l])
+        builder.dataColumns = [value: Double]
         Row row = builder.createRow(inputDataRow)
 
         assertThat row, allOf(
@@ -86,6 +88,7 @@ class HighDimBuilderTests {
     @Test
     void "test single field projection. String"() {
         def inputDataRow = new TestDataRow(assayColumns: testAssays, data: ['A', 'B'])
+        builder.dataColumns = [value: String]
         Row row = builder.createRow(inputDataRow)
 
         assertThat row, allOf(
@@ -99,8 +102,9 @@ class HighDimBuilderTests {
 
     @Test
     void "test multiple field projection."() {
-        builder.projection = new TestProjection(dataProperties: [a: Integer, b: String])
-
+        def types = [a: Integer, b: String]
+        builder.projection = new TestProjection(dataProperties: types)
+        builder.dataColumns = types
         def inputDataRow = new TestDataRow(assayColumns: testAssays, data: [[a: 1, b: 'text1'], [a: 2, b: 'text2']])
         Row row = builder.createRow(inputDataRow)
 
@@ -139,7 +143,7 @@ class HighDimBuilderTests {
 
         @Override
         Object getAt(AssayColumn assayColumn) {
-            getAt(assayColumn)
+            getAt((Object) assayColumn)
         }
 
         @Override

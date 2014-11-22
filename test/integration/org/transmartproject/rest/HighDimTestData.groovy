@@ -27,6 +27,7 @@ package org.transmartproject.rest
 
 import org.transmartproject.db.dataquery.highdim.acgh.AcghTestData
 import org.transmartproject.db.dataquery.highdim.mrna.MrnaTestData
+import org.transmartproject.db.dataquery.highdim.vcf.VcfTestData
 import org.transmartproject.db.ontology.ConceptTestData
 import org.transmartproject.rest.protobuf.HighDimProtos.HighDimHeader
 import org.transmartproject.rest.protobuf.HighDimProtos.Row
@@ -36,11 +37,13 @@ class HighDimTestData {
     ConceptTestData conceptData = new ConceptTestData()
     MrnaTestData mrnaData
     AcghTestData acghData
+    VcfTestData vcfData
 
     void saveAll() {
         conceptData.saveAll()
         mrnaData?.saveAll()
         acghData?.saveAll()
+        vcfData?.saveAll()
     }
 
     static class HighDimResult {

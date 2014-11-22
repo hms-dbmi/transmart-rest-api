@@ -40,6 +40,7 @@ import org.transmartproject.core.dataquery.highdim.projections.Projection
 import org.transmartproject.db.dataquery.InMemoryTabularResult
 import org.transmartproject.db.dataquery.highdim.acgh.AcghTestData
 import org.transmartproject.db.dataquery.highdim.mrna.MrnaTestData
+import org.transmartproject.db.dataquery.highdim.vcf.VcfTestData
 import org.transmartproject.db.ontology.I2b2
 import org.transmartproject.rest.HighDimTestData.HighDimResult
 import org.transmartproject.rest.protobuf.HighDimBuilder
@@ -92,6 +93,11 @@ class HighDimDataServiceTests {
         testData.saveAll()
     }
 
+    private void setUpVcf() {
+        testData.vcfData = new VcfTestData(concept.code)
+        testData.saveAll()
+    }
+
     @Test
     void testMrnaDefaultRealProjection() {
         setUpMrna()
@@ -119,7 +125,16 @@ class HighDimDataServiceTests {
         assertResults(result, 'acgh', projection)
     }
 
-    private assertResults(HighDimResult input, String dataType, String projection) {
+    @Test
+    void testVcf_singleFieldProjection() {
+        setUpVcf()
+        String projection = 'variant'
+        HighDimResult result = getProtoBufResult('vcf', projection)
+
+        assertResults(result, 'vcf', projection, String)
+    }
+
+    private assertResults(HighDimResult input, String dataType, String projection, Class defaultClass = Double) {
 
         //asserting header Assays
         List expectedAssays = collectedTable.indicesList.collect { assayColumnMatcher(it) }
@@ -129,7 +144,7 @@ class HighDimDataServiceTests {
         boolean multiValued = proj instanceof MultiValueProjection
 
         //asserting header ColumnSpecs
-        Map<String,Class> dataProperties = HighDimBuilder.getDataProperties(proj)
+        Map<String,Class> dataProperties = HighDimBuilder.getDataProperties(proj, null, defaultClass)
         assertThat input.header.columnSpecList, columnSpecMatcher(dataProperties)
 
         //asserting row data
@@ -179,7 +194,11 @@ class HighDimDataServiceTests {
             }
 
         } else {
-            list = [ dataRow.iterator().collect { it as Double} ]
+            if (columnSpecs[0].type == ColumnType.DOUBLE) {
+                list = [ dataRow.iterator().collect { it as Double} ]
+            } else {
+                list = [ dataRow.iterator().collect { it.toString() } ]
+            }
         }
 
         List<Matcher> matchers = []
