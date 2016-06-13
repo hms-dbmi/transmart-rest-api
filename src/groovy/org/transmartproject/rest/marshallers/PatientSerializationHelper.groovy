@@ -51,7 +51,7 @@ class PatientSerializationHelper extends AbstractHalOrJsonSerializationHelper<Pa
 
     @Override
     Map<String, Object> convertToMap(Patient patient) {
-        Map<String, Object> result = getPropertySubsetForSuperType(patient, Patient, ['assays', 'sex'] as Set)
+        Map<String, Object> result = getPropertySubsetForSuperType(patient, Patient, ['id', 'assays', 'sex'] as Set)
         result.put('sex', patient.sex.name()) //sex has to be manually converted (no support for enums)
         result
     }
