@@ -1,0 +1,32 @@
+The version number follows semantic versioning: minor number updates indicate backward compatible changes, major
+number updates indicate backward-incompatible versions. In that case clients will usually need to be updated.
+Add any changes that change the endpoints or the data they return here. 
+
+INCREMENT THE VERSION NUMBER IF YOU RELEASE A CHANGED VERSION! Then clients can fail gracefully instead of raising some exception.
+
+
+3.0
+===
+
+The first version with a version number.
+
+added: 
+	- /patient_sets endpoint
+
+changed:
+	- SubjectController no longer returns the database id of patients. The database id should not be used outside of Transmart, and was not 
+	useful anyway since it was not exposed anywhere else. Use the inTrialId instead. This change breaks old R clients since they use the 'id' 
+	column as the name in the patients data frame.
+
+
+earlier versions
+================
+
+Earlier versions do not have a version number.
+
+There are two known incompatible changes in the past:
+
+- /oauth/verify got changed to /oauth/inspectToken for checking if a token is still valid. The latter 
+  returns different more useful information, and the former no longer works for this purpose.
+- A new version of the oauth plugin no longer accepts GET requests for logging in, which the R client uses.
+  The R client needs to change to using POST requests.

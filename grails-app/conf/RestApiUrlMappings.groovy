@@ -28,6 +28,8 @@ class RestApiUrlMappings {
     // grails url-mappings-report can come handy here...
 
     static mappings = {
+        '/transmart-rest-api-version'(controller: 'apiVersion', method: 'GET', includes: ['index'])
+
         '/studies'(controller: 'study', method: 'GET', resources: 'study', includes: ['index', 'show'])
 
         '/studies'(resources: 'study', method: 'GET') {
