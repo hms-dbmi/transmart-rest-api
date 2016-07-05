@@ -95,13 +95,13 @@ grails.project.dependency.resolution = {
 
         compile ':spring-security-core:2.0-RC2'
 
-        runtime ':transmart-core:1.2.2'
+        runtime ':transmart-core:1.2.4.DBMI'
         // core-db doesn't export hibernate as dep as it was builtin in 2.2.4
         runtime ':hibernate:3.6.10.6'
 
 		// tests depend on transmart-core-db-tests which is not part of the release yet
         test ':functional-test:2.0.RC1'
-        test ':transmart-core:1.2.2'
+        //test ':transmart-core:1.2.2'
         test ':transmart-core-db-tests:1.2.2'
     }
 }
