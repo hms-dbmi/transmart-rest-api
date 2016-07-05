@@ -102,7 +102,7 @@ grails.project.dependency.resolution = {
 		// tests depend on transmart-core-db-tests which is not part of the release yet
         test ':functional-test:2.0.RC1'
         //test ':transmart-core:1.2.2'
-        test ':transmart-core-db-tests:1.2.2'
+        //test ':transmart-core-db-tests:1.2.2'
     }
 }
 
