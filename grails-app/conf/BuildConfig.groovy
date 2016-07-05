@@ -63,7 +63,7 @@ grails.project.dependency.resolution = {
     }
 
     dependencies {
-        compile 'org.transmartproject:transmart-core-api:1.2.2'
+        //compile 'org.transmartproject:transmart-core-api:1.2.2'
         compile 'org.javassist:javassist:3.16.1-GA'
 
         // includes fix for GRAILS-11126
